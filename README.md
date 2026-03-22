@@ -8,10 +8,13 @@ Lucy in your editor. A VS Code extension for the elastik protocol.
 
 Syncs your editor context to elastik. AI sees what you're coding. You stay in control.
 
-- **Sidebar panel** — renders your world's stage content
+- **Sidebar panel** — renders your world's stage content in real-time
 - **Auto world switching** — detects git repo name → maps to elastik world
-- **Editor context sync** — file path, content, selection, language → `/{world}/result`
-- **Three triggers** — switch file, save file, move cursor (debounced)
+- **Editor context sync** — file path, content, selection, cursor, language → `/{world}/result`
+- **Symbol tree** — function/class structure sent via `executeDocumentSymbolProvider`
+- **Terminal output** — last 2000 chars of terminal activity synced *(pending stable VS Code API)*
+- **Git context** — `git diff --stat` + recent commits in every payload
+- **Smart truncation** — 5000 chars centered on cursor, not from file top
 
 ---
 
@@ -28,15 +31,41 @@ Syncs your editor context to elastik. AI sees what you're coding. You stay in co
 
 ```
 You write code
-  → extension reads file content + selection + language
-  → POST to /{world}/result
+  → extension reads file + selection + cursor + symbols + terminal + git
+  → POST to /{world}/result (single payload, all context)
   → your AI reads it via MCP or HTTP
-  → AI writes code review / suggestions to /{world}/stage
+  → AI writes feedback to /{world}/stage
   → sidebar panel renders stage
-  → you see AI feedback next to your code
+  → you see AI analysis next to your code
 ```
 
 All data stays on your machine. `localhost:3004`. Your `universe.db`. Your disk.
+
+---
+
+## Context payload
+
+```json
+{
+  "source": "vscode",
+  "file": "src/sync.ts",
+  "content": "5000 chars centered on cursor",
+  "selection": "selected text",
+  "language": "typescript",
+  "cursor": { "line": 35, "col": 12 },
+  "symbols": [
+    { "name": "syncContext", "kind": "Function", "range": "30-55" }
+  ],
+  "git": {
+    "diff_stat": "3 files changed, 42 insertions(+)",
+    "recent_commits": "abc1234 fix sync timing\ndef5678 add terminal support"
+  },
+  "terminal": "last 2000 chars of terminal output",
+  "timestamp": 1711180800000
+}
+```
+
+One GET. One POST. No LSP. No Copilot subscription. No telemetry.
 
 ---
 
@@ -47,8 +76,6 @@ Working in elastik repo     → /elastik-dev
 Working in albon repo       → /albon-dev
 No git repo detected        → /vscode
 ```
-
-Reads `.git` directory name. Falls back to `/vscode`.
 
 ---
 
@@ -73,20 +100,15 @@ elastik: Sync Now        → manually trigger context sync
 
 ---
 
-## What AI sees
+## Roadmap
 
-```json
-{
-  "source": "vscode",
-  "file": "src/sync.ts",
-  "selection": "selected text if any",
-  "content": "first 5000 chars of file",
-  "language": "typescript",
-  "timestamp": 1711180800000
-}
-```
-
-One GET. One POST. No LSP. No Copilot subscription. No telemetry.
+- [ ] **Write-back channel** — AI edits code via `/{world}/pending`, diff view + approve/reject
+- [ ] **Microphone sync** — local Whisper transcription → `/{world}/result` with `source: "mic"`
+- [ ] **Inline suggestions** — AI writes code suggestions rendered as ghost text in editor
+- [ ] **Multi-file context** — send open tabs and recently edited files, not just active file
+- [ ] **Diagnostics sync** — linting errors and warnings in payload
+- [ ] **Adaptive polling** — 2s when active, 10s when idle
+- [ ] **Chrome Web Store** — publish elastik-extension for one-click install
 
 ---
 
