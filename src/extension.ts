@@ -4,8 +4,6 @@ import { resolveWorld, syncContext, syncContextDebounced } from "./sync";
 // import { initPendingSync } from "./pending"; // disabled — pending server-side debugging
 import {
   getUrl,
-  hasOptedIn,
-  setOptedIn,
   hasConfirmedRemote,
   setConfirmedRemote,
 } from "./config";

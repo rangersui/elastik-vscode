@@ -6,19 +6,36 @@ import * as fs from "fs";
 const DEFAULT_BLACKLIST = [
   ".env",
   ".env.*",
-  "*secret*",
-  "*key*",
-  "*credential*",
-  "*password*",
+  "*.key",
   "*.pem",
+  "*_key",
+  "*_key.*",
+  "id_rsa*",
+  "*.keystore",
+  "*.token",
+  "*_token",
+  "*_token.*",
+  "token.txt",
+  "token.json",
+  "*.secret",
+  "*_secret",
+  "*_secret.*",
+  "secret.*",
+  ".secret*",
+  "*.password",
+  "*_password",
+  "password.*",
+  ".password*",
+  "*.credential",
+  "*credential*",
+  "credentials.*",
   "*.p12",
-  "*token*",
   "*.pfx",
 ];
 
 // Sensitive keywords to scrub from terminal output
 const TERMINAL_SENSITIVE =
-  /\b(password|token|key|secret|credential)\b/i;
+  /\b(password|token|secret|credential|api_key|apikey|private_key|access_token)\b/i;
 
 /**
  * Check if a filename matches a glob-like pattern.

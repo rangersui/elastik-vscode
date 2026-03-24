@@ -106,12 +106,12 @@ elastik: Sync Now        → manually trigger context sync
 ## Security
 
 **Blacklist mode** (default): all files are synced except sensitive ones.
-Built-in exclusions: `.env`, `.env.*`, `*secret*`, `*key*`, `*credential*`, `*password*`, `*.pem`, `*.p12`, `*token*`, `*.pfx`.
+Built-in exclusions: `.env`, `.env.*`, `*.key`, `*.pem`, `*.p12`, `*.pfx`, `id_rsa*`, `*.keystore`, `*.token`, `*.secret`, `*.password`, `*.credential`, `credentials.*`, and related variants.
 Add your own patterns via `elastik.blacklist` or a `.elastikignore` file (`.gitignore` syntax).
 
 **Whitelist mode**: nothing is synced unless it matches `elastik.whitelist` patterns.
 
-**Terminal scrubbing**: lines containing `password`, `token`, `key`, `secret`, or `credential` are stripped before sync.
+**Terminal scrubbing**: lines containing `password`, `token`, `secret`, `credential`, `api_key`, `apikey`, `private_key`, or `access_token` are stripped before sync.
 
 **Remote URL warning**: if `elastik.url` points outside localhost or your Tailscale network (100.x.x.x), a confirmation dialog appears: *"Code content will leave your device. Continue?"*
 
