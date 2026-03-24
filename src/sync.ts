@@ -4,6 +4,7 @@ import * as fs from "fs";
 import * as cp from "child_process";
 import { getUrl, isEnabled } from "./config";
 import { getTerminalOutput } from "./terminal";
+import { shouldSyncFile, scrubTerminalOutput } from "./filter";
 
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -146,6 +147,10 @@ export async function syncContext(world: string): Promise<void> {
   if (!editor) return;
 
   const doc = editor.document;
+
+  // Security: check if this file should be synced
+  if (!shouldSyncFile(doc.uri.fsPath)) return;
+
   const selection = editor.selection;
   const selectedText = doc.getText(selection);
   const content = getContentWindow(doc, editor);
@@ -160,8 +165,8 @@ export async function syncContext(world: string): Promise<void> {
   // Git context
   const git = await getGitContext(doc.uri.fsPath);
 
-  // Terminal output
-  const terminal = getTerminalOutput();
+  // Terminal output (scrubbed of sensitive lines)
+  const terminal = scrubTerminalOutput(getTerminalOutput());
 
   const payload = JSON.stringify({
     source: "vscode",

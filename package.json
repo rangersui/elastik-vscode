@@ -28,6 +28,10 @@
       {
         "command": "elastik.syncNow",
         "title": "Elastik: Sync Now"
+      },
+      {
+        "command": "elastik.enable",
+        "title": "Elastik: Enable"
       }
     ],
     "viewsContainers": {
@@ -60,6 +64,24 @@
           "type": "boolean",
           "default": true,
           "description": "Enable Elastik context sync"
+        },
+        "elastik.filterMode": {
+          "type": "string",
+          "enum": ["blacklist", "whitelist"],
+          "default": "blacklist",
+          "description": "Security filter mode. Blacklist excludes sensitive files by default. Whitelist only syncs explicitly listed patterns."
+        },
+        "elastik.blacklist": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Additional file patterns to exclude (on top of built-in sensitive file patterns like .env, *.pem, *secret*)"
+        },
+        "elastik.whitelist": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "File patterns to sync in whitelist mode (e.g. [\"*.py\", \"*.ts\", \"src/**\"])"
         }
       }
     }

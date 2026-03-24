@@ -2,11 +2,67 @@ import * as vscode from "vscode";
 import { ElastikPanelProvider } from "./panel";
 import { resolveWorld, syncContext, syncContextDebounced } from "./sync";
 // import { initPendingSync } from "./pending"; // disabled — pending server-side debugging
-import { getUrl } from "./config";
+import {
+  getUrl,
+  hasOptedIn,
+  setOptedIn,
+  hasConfirmedRemote,
+  setConfirmedRemote,
+} from "./config";
+import { isRemoteUrl } from "./filter";
 
 let panelProvider: ElastikPanelProvider;
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
+  // "Elastik: Enable" command — always registered, even if declined
+  context.subscriptions.push(
+    vscode.commands.registerCommand("elastik.enable", async () => {
+      await context.globalState.update("elastik.optIn", "pending");
+      vscode.window.showInformationMessage(
+        "Elastik reset. Reload window to re-enable.",
+        "Reload"
+      ).then((choice) => {
+        if (choice === "Reload") {
+          vscode.commands.executeCommand("workbench.action.reloadWindow");
+        }
+      });
+    })
+  );
+
+  // First activation: opt-in prompt. Declined → silent disable, user runs "Elastik: Enable" to retry.
+  const optInState = context.globalState.get<string>("elastik.optIn", "pending");
+  if (optInState === "declined") return;
+  if (optInState === "pending") {
+    const url = getUrl();
+    const choice = await vscode.window.showWarningMessage(
+      `Elastik will sync file content, cursor, terminal output and git info to [${url}]. Sensitive files (.env, keys) are excluded by default. Continue?`,
+      { modal: true },
+      "Enable",
+      "Disable"
+    );
+    if (choice === "Enable") {
+      await context.globalState.update("elastik.optIn", "accepted");
+    } else {
+      await context.globalState.update("elastik.optIn", "declined");
+      return;
+    }
+  }
+
+  // Remote URL warning (non-localhost, non-100.x.x.x)
+  const url = getUrl();
+  if (isRemoteUrl(url) && !hasConfirmedRemote(context)) {
+    const choice = await vscode.window.showWarningMessage(
+      "Code content will leave your device. Continue?",
+      { modal: true },
+      "Continue",
+      "Cancel"
+    );
+    if (choice === "Continue") {
+      await setConfirmedRemote(context, true);
+    } else {
+      return;
+    }
+  }
   panelProvider = new ElastikPanelProvider(context.extensionUri);
 
   context.subscriptions.push(
